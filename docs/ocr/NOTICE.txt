@@ -1,0 +1,5 @@
+Tesseract.js 6.0.1 and tesseract.js-core (see corresponding licenses) are used for local OCR.
+Language data: @tesseract.js-data/jpn@1.0.0 and @tesseract.js-data/eng@1.0.0, 4.0.0_best_int.
+Source: https://github.com/naptha/tessdata
+Tesseract language models are distributed under Apache License 2.0: https://github.com/tesseract-ocr/tessdata/blob/main/LICENSE
+No user image is included in these assets.
