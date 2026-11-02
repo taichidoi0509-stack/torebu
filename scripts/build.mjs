@@ -1,12 +1,15 @@
 import {build} from 'esbuild';
 import {createHash} from 'node:crypto';
 import {rm,mkdir,cp,writeFile,readFile} from 'node:fs/promises';
+const hash=s=>createHash('sha256').update(s).digest('hex').slice(0,10);
 await rm('docs',{recursive:true,force:true});await mkdir('docs',{recursive:true});await cp('public','docs',{recursive:true});
-const result=await build({entryPoints:['client/auth.js'],outfile:'auth-client.js',write:false,bundle:true,minify:true,format:'esm',target:'es2022',legalComments:'none',external:['./app.js?v=7']});
-const code=result.outputFiles[0].contents,hash=createHash('sha256').update(code).digest('hex').slice(0,10),filename='auth-client-'+hash+'.js';
-await writeFile('docs/'+filename,code);
-// Keep old HTML usable during browser/CDN cache transitions.
-await writeFile('docs/auth-client.js',code);
-const html=(await readFile('public/index.html','utf8')).replace('auth-client.js?v=7',filename);await writeFile('docs/index.html',html);
-const sw=(await readFile('public/sw.js','utf8')).replace('auth-client.js?v=7',filename).replace('torebu-github-v7','torebu-github-'+hash);await writeFile('docs/sw.js',sw);
+const css=await readFile('public/dashboard.css','utf8'),cssFile='dashboard-'+hash(css)+'.css';await writeFile('docs/'+cssFile,css);
+const appSource=(await readFile('public/app.js','utf8')).replace('./dashboard.css?v=8','./'+cssFile);
+const appResult=await build({stdin:{contents:appSource,resolveDir:process.cwd()+'/public',sourcefile:'app.js'},write:false,bundle:true,minify:true,format:'esm',target:'es2022',legalComments:'none'});
+const app=appResult.outputFiles[0].contents,appFile='app-'+hash(app)+'.js';await writeFile('docs/'+appFile,app);await writeFile('docs/app.js',app);
+const authSource=(await readFile('client/auth.js','utf8')).replace('./app.js?v=7','./'+appFile);
+const result=await build({stdin:{contents:authSource,resolveDir:process.cwd()+'/client',sourcefile:'auth.js'},write:false,bundle:true,minify:true,format:'esm',target:'es2022',legalComments:'none',external:['./'+appFile]});
+const code=result.outputFiles[0].contents,filename='auth-client-'+hash(code)+'.js';await writeFile('docs/'+filename,code);await writeFile('docs/auth-client.js',code);
+await writeFile('docs/index.html',(await readFile('public/index.html','utf8')).replace('auth-client.js?v=7',filename).replace('dashboard.css?v=8',cssFile));
+await writeFile('docs/sw.js',(await readFile('public/sw.js','utf8')).replace('auth-client.js?v=7',filename).replace('app.js?v=7',appFile).replace("'./backend.js'","'./"+cssFile+"'").replace('torebu-github-v7','torebu-github-'+hash(code+css+app)));
 await writeFile('docs/.nojekyll','');
