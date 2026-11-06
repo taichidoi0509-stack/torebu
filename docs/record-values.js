@@ -1,0 +1,1 @@
+export function adjustSetValue(value,field,direction){const weight=field==='weight',minimum=weight?0:1,maximum=weight?1000:999,current=Number.isFinite(Number(value))?Number(value):minimum;return Math.min(maximum,Math.max(minimum,(Math.round(current*10)+Number(direction)*(weight?5:10))/10))}

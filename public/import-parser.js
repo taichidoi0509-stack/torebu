@@ -25,3 +25,4 @@ export function parseWorkoutImage(text){
 export function workoutSignature(day,items){return JSON.stringify({day,items:items.map(x=>({name:x.name.normalize('NFKC').replace(/\s/g,''),sets:x.sets.map(s=>[Number(s.weight),Number(s.reps)])})).sort((a,b)=>a.name.localeCompare(b.name))})}
 export async function sha256(value){const bytes=typeof value==='string'?new TextEncoder().encode(value):value;return [...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(x=>x.toString(16).padStart(2,'0')).join('')}
 export async function importRecordId(user,group,key){const h=await sha256(`${user}:${group}:${key}`);return `${h.slice(0,8)}-${h.slice(8,12)}-5${h.slice(13,16)}-a${h.slice(17,20)}-${h.slice(20,32)}`}
+export function isImportedDuplicate(post,{key,imageHash,day,items}){return post.items.some(x=>(key&&x.importKey===key)||(imageHash&&x.imageHash===imageHash))||Boolean(day&&items&&workoutSignature(post.day,post.items)===workoutSignature(day,items))}
